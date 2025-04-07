@@ -8,20 +8,21 @@ def get_report(df):
     """
     print(Fore.GREEN + "Generating cash transaction report..." + Style.RESET_ALL)
 
-    print(Fore.MAGENTA + "Cash Holdings:" + Style.RESET_ALL)
+    stock_holdings_df = get_stock_holdings(df)
     cash_holdings_df = get_cash_holdings(df)
+    dividend_payments_df = get_dividend_payments(df)
+    portfolio_value = get_portfolio_value(cash_holdings_df, stock_holdings_df)
+    
+    print(Fore.MAGENTA + "\nCash Holdings:" + Style.RESET_ALL)
     print(cash_holdings_df)
 
     print(Fore.CYAN + "\nStock Holdings:" + Style.RESET_ALL)
-    stock_holdings_df = get_stock_holdings(df)
     print(stock_holdings_df)
 
-    # print(Fore.YELLOW + "\nDividend Payments:" + Style.RESET_ALL)
-    # dividend_payments_df = get_dividend_payments(df)
-    # print(dividend_payments_df)
+    print(Fore.YELLOW + "\nDividend Payments:" + Style.RESET_ALL)
+    print(dividend_payments_df)
 
     print(Fore.RED + "\nPortfolio Value:" + Style.RESET_ALL)
-    portfolio_value = get_portfolio_value(cash_holdings_df, stock_holdings_df)
     print(portfolio_value)
     
     return df
@@ -75,6 +76,10 @@ def get_stock_holdings(df):
     df['Unit Value'] = df['Product'].apply(get_stock_price)
     df['Total Value'] = df['Units'] * df['Unit Value']
 
+    # Add "Portfolio Percentage" column based on "Total Value"
+    total_portfolio_value = df['Total Value'].sum()
+    df['Portfolio Percentage'] = (df['Total Value'] / total_portfolio_value) * 100
+
     # Reset the index to ensure it starts at 0
     df = df.reset_index(drop=True)
 
@@ -109,12 +114,14 @@ def get_portfolio_value(cash_holdings_df, stock_holdings_df):
     # Get the total portfolio value
     portfolio_cost = total_in - total_out
     portfolio_value = total_cash + total_stock
-    percentage_diff = (portfolio_value / portfolio_cost - 1) * 100
+    portfolio_gain = portfolio_value - portfolio_cost
+    portfolio_percentage_diff = (portfolio_value / portfolio_cost - 1) * 100
 
     df = pd.DataFrame({
         'Cost': [portfolio_cost],
         'Value': [portfolio_value],
-        'Percentage Diff': [percentage_diff]
+        'Gain': [portfolio_gain],
+        'Percentage Diff': [portfolio_percentage_diff]
     })
 
     return df
